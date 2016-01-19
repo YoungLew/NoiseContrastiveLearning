@@ -2,7 +2,7 @@
 *     File Name           :     model.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 13:36]
-*     Last Modified       :     [2016-01-18 16:23]
+*     Last Modified       :     [2016-01-19 11:53]
 *     Description         :     storage grid MRF Model 
 **/
 
@@ -15,12 +15,18 @@
 class MRFModel{
     public:
         double **theta_a, **theta_b, **phi;
-        int n;
+        int n, state_number;
         double logZ;
         MRFModel(int N = 5);
         ~MRFModel();
         LOGDOUBLE calculate_norm_log_prob(Data & d);
         LOGDOUBLE calculate_unnorm_log_prob(Data &d);
+        void sample_several_points(std::vector<Data> & datas, int num_samples);
+    private:
+        void calculate_forward(double*** prob_forward);
+        void calculate_backward(double*** prob_backward);
+        void probability_initialize(double*** prob_forward, double*** prob_backward);
+        void probability_finalize(double*** prob_forward, double*** prob_backward);
 };
 
 MRFModel::MRFModel(int N){
@@ -62,5 +68,63 @@ LOGDOUBLE MRFModel::calculate_unnorm_log_prob(Data& d){
 }
 LOGDOUBLE MRFModel::calculate_norm_log_prob(Data& d){
     return this->calculate_unnorm_log_prob(d) - this->logZ;
+}
+void MRFModel::sample_several_points(std::vector<Data> &datas, int num_samples){
+    int state_number = 1;
+    for (int i = 0; i < n; i++) state_number *= 2;
+    this->state_number = state_number; 
+    double*** prob_forward, ***prob_backward;
+    this->probability_initialize(prob_forward, prob_backward);
+
+    //this->calculate_forward(prob_forward);
+    //this->calculate_backward(prob_backward);
+    for (int i = 0; i < this->n - 1; i++)
+        for (int j = 0; j < this->state_number; j++)
+            for (int k = 0; k < this->state_number; k++){
+                std::cout << i << ' ' << j << ' ' << k << ' ';
+                std::cout << prob_forward[i][j][k] << " ";
+            }
+    this->probability_finalize(prob_forward, prob_backward);
+}
+void MRFModel::probability_initialize(double*** prob_forward, double*** prob_backward){
+    int n = this->n;
+    int state_number = this->state_number;
+    prob_forward = new double**[n - 1];
+    prob_backward = new double**[n - 1];
+    for (int i= 0; i < n-1; i++){
+        prob_forward[i] = new double*[state_number];
+        for (int j = 0; j < state_number; j++) prob_forward[i][j] = new double[state_number];
+        prob_backward[i] = new double*[state_number];
+        for (int j = 0; j < state_number; j++) prob_backward[i][j] = new double[state_number];
+    }
+}
+void MRFModel::probability_finalize(double*** prob_forward, double*** prob_backward){
+    int n = this->n;
+    int state_number = this->state_number;
+    for (int i = 0; i < n - 1; i++){
+        for (int j = 0; j < state_number; j++) delete[] prob_forward[i][j];
+        delete[] prob_forward[i];
+    }
+    delete[] prob_forward;
+    for (int i = 0; i < n - 1; i++){
+        for (int j = 0; j < state_number; j++) delete[] prob_backward[i][j];
+        delete[] prob_backward[i];
+    }
+    delete[] prob_backward;
+}
+void MRFModel::calculate_forward(double*** prob_forward){
+    int n = this->n;
+    int state_number = this->state_number;   
+    for (int i = 0; i < n - 1; i++)
+       for (int si = 0; si < state_number ; si++){
+            for (int sj = 0; sj < state_number; sj++){
+                
+            }
+       }
+
+}
+void MRFModel::calculate_backward(double*** prob_backward){
+    int n = this->n;
+    int state_number = this->state_number;
 }
 #endif

@@ -2,13 +2,14 @@
 *     File Name           :     test.cxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 14:14]
-*     Last Modified       :     [2016-01-18 14:26]
+*     Last Modified       :     [2016-01-19 11:45]
 *     Description         :     test code for MRF Experiment 
 **/
 
 #include "./mrfmodel.hxx"
 #include "./data.hxx"
 #include "./util_sample.hxx"
+#include <vector>
 #include <iostream>
 using namespace std;
 void generate_data(Data* d){
@@ -46,6 +47,10 @@ void test_model(){
     MRFModel * m = new MRFModel(n);
     generate_model(m);
     std::cout << m->calculate_norm_log_prob(*d) << std::endl;
+    std::vector<Data> datas;
+    datas.clear();
+    for (int i = 0; i < 10; i++) datas.push_back(Data(n));
+    m->sample_several_points(datas, 10);
     delete d;
     delete m;
 }
