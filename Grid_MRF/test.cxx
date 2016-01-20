@@ -2,7 +2,7 @@
 *     File Name           :     test.cxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 14:14]
-*     Last Modified       :     [2016-01-20 15:04]
+*     Last Modified       :     [2016-01-20 16:55]
 *     Description         :     test code for MRF Experiment 
 **/
 
@@ -54,6 +54,10 @@ void test_model(){
     datas.clear();
     for (int i = 0; i < 10; i++) datas.push_back(Data(n));
     m->sample_several_points(datas, 10);
+    for (int i = 0; i < 10; i++){
+        std::cout << i << std::endl;
+        datas[i].print();
+    }
     delete d;
     delete m;
 }

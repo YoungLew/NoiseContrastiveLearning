@@ -2,7 +2,7 @@
 *     File Name           :     util_sample.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 14:08]
-*     Last Modified       :     [2016-01-18 14:16]
+*     Last Modified       :     [2016-01-20 16:39]
 *     Description         :     some util function for sample algorithms 
 **/
 
@@ -22,8 +22,7 @@ double random_double(){
     return d;
 }
 
-int sample_from_distribution(std::vector<double>& dist){
-    int n = dist.size();
+int sample_from_distribution(double* dist, int n){
     double f = random_double();
     int tmp = 0;
     while (f > dist[tmp]) tmp++;

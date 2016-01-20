@@ -1,2 +1,2 @@
 all:
-	g++ -o test test.cxx 
+	g++ -o generate_data ./generate_data.cxx 

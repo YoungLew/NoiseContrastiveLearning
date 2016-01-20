@@ -2,13 +2,15 @@
 *     File Name           :     data.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-03 10:18]
-*     Last Modified       :     [2016-01-19 11:42]
+*     Last Modified       :     [2016-01-20 17:26]
 *     Description         :     2d-array data 
 **/
 
 #ifndef __DATA__
 #define __DATA__
 #include <iostream>
+#include <fstream>
+using namespace std;
 struct Data{
     Data(int n){
         this->size = n;
@@ -43,6 +45,18 @@ struct Data{
                 std::cout << this->elem[i][j] << " ";
             std::cout << std::endl;
         }
+    }
+    void print_to_file(ofstream& output){
+        for (int i = 0; i < this->size; i++){
+            for (int j = 0; j < this->size; j++)
+                output << this->elem[i][j] << " ";
+            output << std::endl;
+        }
+    }
+    void load_from_file(ifstream& input){
+        for (int i = 0; i < this->size; i++)
+            for (int j = 0; j < this->size; j++)
+                input >> this->elem[i][j];
     }
 };
 

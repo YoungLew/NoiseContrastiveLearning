@@ -2,7 +2,7 @@
 *     File Name           :     model.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 13:36]
-*     Last Modified       :     [2016-01-20 16:31]
+*     Last Modified       :     [2016-01-20 16:54]
 *     Description         :     storage grid MRF Model 
 **/
 
@@ -81,6 +81,7 @@ LOGDOUBLE MRFModel::calculate_norm_log_prob(Data& d){
     return this->calculate_unnorm_log_prob(d) - this->logZ;
 }
 void MRFModel::sample_several_points(std::vector<Data> &datas, int num_samples){
+    int n = this->n;
     int state_number = 1;
     for (int i = 0; i < n; i++) state_number *= 2;                  // total state number of one line
     this->state_number = state_number; 
@@ -90,6 +91,17 @@ void MRFModel::sample_several_points(std::vector<Data> &datas, int num_samples){
     this->probability_initialize(prob_forward, prob_backward);
     this->calculate_forward(prob_forward);
     this->calculate_backward(prob_backward);
+    int *offset = new int[n];
+    offset[n - 1] = 1;
+    for (int i = n - 2; i >= 0; i--) offset[i] = offset[i + 1]  * 2;
+    for (int k = 0; k < num_samples; k++){
+        int old_state = 0;
+        for (int i = 0; i < this-> n; i++){
+            if (i == 0) old_state = sample_from_distribution(prob_forward[0][0], this->state_number);
+            else old_state = sample_from_distribution(prob_forward[i][old_state], this->state_number);
+            for (int j = 0; j < n; j++)datas[k].get(i, j) = (int)((old_state & offset[j]) != 0);
+        }
+    }
     this->probability_finalize(prob_forward, prob_backward);
 }
 void MRFModel::probability_initialize(double*** prob_forward, double*** prob_backward){     // function to initialize the probability data structure n * state * state
