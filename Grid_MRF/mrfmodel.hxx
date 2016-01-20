@@ -2,7 +2,7 @@
 *     File Name           :     model.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 13:36]
-*     Last Modified       :     [2016-01-20 15:03]
+*     Last Modified       :     [2016-01-20 16:31]
 *     Description         :     storage grid MRF Model 
 **/
 
@@ -89,7 +89,7 @@ void MRFModel::sample_several_points(std::vector<Data> &datas, int num_samples){
     prob_backward = new double**[n];
     this->probability_initialize(prob_forward, prob_backward);
     this->calculate_forward(prob_forward);
-    //this->calculate_backward(prob_backward);
+    this->calculate_backward(prob_backward);
     this->probability_finalize(prob_forward, prob_backward);
 }
 void MRFModel::probability_initialize(double*** prob_forward, double*** prob_backward){     // function to initialize the probability data structure n * state * state
@@ -123,8 +123,6 @@ void MRFModel::calculate_forward(double*** prob_forward){                       
     offset[n - 1] = 1;
 
     for (int i = n - 2; i >= 0; i--) offset[i] = offset[i + 1] * 2;                     // offset array: x & 2**k => the kth value 
-    for (int i = 0; i < n; i++) std::cout << offset[i] << " ";
-    std::cout << std::endl;
     for (int i = 0; i < n; i++)
        for (int si = 0; si < state_number; si++){
             for (int sj = 0; sj < state_number; sj++){
@@ -150,6 +148,31 @@ void MRFModel::calculate_forward(double*** prob_forward){                       
 void MRFModel::calculate_backward(double*** prob_backward){
     int n = this->n;
     int state_number = this->state_number;
+    int * offset = new int[n];
+    offset[n - 1] = 1;
+    for (int i = n - 2; i >= 0; i--) offset[i] = offset[i + 1] * 2;
+    for (int i = n - 1; i >= 0; i--){
+        for (int si = 0; si < state_number; si++){
+            for (int sj = 0; sj < state_number; sj++){
+                // given si, which is the state of row i + 1 while sj is the state of row i
+                // we need to calculat the conditional probability
+                double tmp = 0.0;
+                for (int k = 0; k < n; k++) if ((offset[k] & sj) != 0) tmp += this->phi[i][k];
+                for (int k = 0; k < n - 1; k++) if (((offset[k] & sj) != 0) && ((offset[k + 1] & sj) != 0)) tmp += this->theta_b[i][k];
+                if (i != n - 1)
+                   for (int k = 0; k < n; k++) if (((offset[k] & si)!=0) && ((offset[k] & sj)!= 0)) tmp += this->theta_a[i][k]; 
+                prob_backward[i][si][sj] = exp(tmp);
+            }
+            double normal = 0.0;
+            for (int sj = 0; sj < state_number; sj++) normal += prob_backward[i][si][sj];
+            for (int sj = 0; sj < state_number; sj++) prob_backward[i][si][sj] /= ((double)(normal));
+            for (int sj = 1; sj < state_number; sj++) prob_backward[i][si][sj] += prob_backward[i][si][sj - 1];
+            for (int sj = 0; sj < state_number; sj++) std::cout << prob_backward[i][si][sj] << " ";
+            std::cout << std::endl;
+        }
+    }
+
+    delete[] offset; 
 }
 void MRFModel::load_from_file(const char* filename){
     ifstream input(filename);
