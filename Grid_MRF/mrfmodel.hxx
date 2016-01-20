@@ -2,7 +2,7 @@
 *     File Name           :     model.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 13:36]
-*     Last Modified       :     [2016-01-20 14:40]
+*     Last Modified       :     [2016-01-20 15:03]
 *     Description         :     storage grid MRF Model 
 **/
 
@@ -12,7 +12,9 @@
 #include"./data.hxx"
 #include "./util_sample.hxx"
 #include "./util_logdouble.hxx"
+#include <fstream>
 #include <math.h>
+using namespace std;
 class MRFModel{
     public:
         double **theta_a, **theta_b, **phi;
@@ -22,15 +24,24 @@ class MRFModel{
         ~MRFModel();
         LOGDOUBLE calculate_norm_log_prob(Data & d);
         LOGDOUBLE calculate_unnorm_log_prob(Data &d);
+        void load_from_file(const char* filename);
+        void print();
         void sample_several_points(std::vector<Data> & datas, int num_samples);
     private:
+        void initialize(int N);
+        void finalize();
         void calculate_forward(double*** prob_forward);
         void calculate_backward(double*** prob_backward);
         void probability_initialize(double*** prob_forward, double*** prob_backward);
         void probability_finalize(double*** prob_forward, double*** prob_backward);
 };
-
 MRFModel::MRFModel(int N){
+    this->initialize(N);
+}
+MRFModel::~MRFModel(){
+    this->finalize();
+}
+void MRFModel::initialize(int N){
     this->theta_a = new double*[N - 1];
     this->theta_b = new double*[N];
     this->phi = new double*[N];
@@ -40,8 +51,7 @@ MRFModel::MRFModel(int N){
     this->n = N;                                                        // the size of grid
     this->logZ = 0.0;
 }
-
-MRFModel::~MRFModel(){
+void MRFModel::finalize(){
     int N = this->n;
     for (int i = 0; i < N; i++) delete[] this->phi[i];
     for (int i = 0; i < N; i++) delete[] this->theta_b[i];
@@ -140,5 +150,40 @@ void MRFModel::calculate_forward(double*** prob_forward){                       
 void MRFModel::calculate_backward(double*** prob_backward){
     int n = this->n;
     int state_number = this->state_number;
+}
+void MRFModel::load_from_file(const char* filename){
+    ifstream input(filename);
+    //load the model
+    this->finalize();
+    int cnt_variable;
+    input >> cnt_variable;
+    this->initialize(cnt_variable);
+    for (int i = 0; i < cnt_variable; i++)
+        for (int j = 0; j < cnt_variable; j++)
+            input >> this->phi[i][j];
+    for (int i = 0; i < cnt_variable - 1; i++)
+        for (int j = 0; j < cnt_variable; j++)
+            input >> this->theta_a[i][j];
+    for (int i = 0; i < cnt_variable; i++)
+        for (int j = 0; j < cnt_variable - 1; j++)
+            input >> this->theta_b[i][j];
+    input.close();
+}
+void MRFModel::print(){
+    std::cout << "======================PHI=======================" << std::endl;
+    for (int i = 0; i < this-> n; i++){
+        for (int j = 0; j < this-> n; j++) std::cout << this->phi[i][j] << " ";
+        std::cout << std::endl;
+    }
+    std::cout << "=======================THETA_A======================" << std::endl;
+    for (int i = 0; i < this-> n - 1; i++){
+        for (int j = 0; j < this-> n; j++) std::cout << this->theta_a[i][j] << " ";
+        std::cout << std::endl;
+    }
+    std::cout << "======================THETA_B=======================" << std::endl;
+    for (int i = 0; i < this-> n; i++){
+        for (int j = 0; j < this-> n - 1; j++) std::cout << this->theta_b[i][j] << " ";
+        std::cout << std::endl;
+    }
 }
 #endif

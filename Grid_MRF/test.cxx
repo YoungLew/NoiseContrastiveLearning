@@ -2,7 +2,7 @@
 *     File Name           :     test.cxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 14:14]
-*     Last Modified       :     [2016-01-19 11:45]
+*     Last Modified       :     [2016-01-20 15:04]
 *     Description         :     test code for MRF Experiment 
 **/
 
@@ -46,6 +46,9 @@ void test_model(){
     generate_data(d);
     MRFModel * m = new MRFModel(n);
     generate_model(m);
+    char s[20] = "demo.model";
+    m->load_from_file(s); 
+    m->print();
     std::cout << m->calculate_norm_log_prob(*d) << std::endl;
     std::vector<Data> datas;
     datas.clear();
