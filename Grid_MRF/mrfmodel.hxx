@@ -2,7 +2,7 @@
 *     File Name           :     model.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 13:36]
-*     Last Modified       :     [2016-01-21 08:55]
+*     Last Modified       :     [2016-01-21 13:37]
 *     Description         :     storage grid MRF Model 
 **/
 
@@ -28,6 +28,8 @@ class MRFModel{
         void print();
         void sample_several_points_gibbs_directional(std::vector<Data> & datas, int num_samples);
         void sample_several_points_gibbs_bidirectional(std::vector<Data>& datas, int num_samples);
+        void load_from_vector(const std::vector<double>& parameters);
+        void save_to_vector(std::vector<double>& parameters);
     private:
         void initialize(int N);
         void finalize();
@@ -251,5 +253,39 @@ void MRFModel::print(){
         for (int j = 0; j < this-> n - 1; j++) std::cout << this->theta_b[i][j] << " ";
         std::cout << std::endl;
     }
+}
+void MRFModel::save_to_vector(std::vector<double>& parameters){
+    parameters.clear();
+    int n = this->n;
+    for (int i = 0; i < n;i++)
+        for (int j = 0; j < n; j++) 
+            parameters.push_back(this->phi[i][j]);
+    for (int i = 0; i < n - 1; i++)
+        for (int j = 0; j < n; j++)
+            parameters.push_back(this->theta_a[i][j]);
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n - 1; j++)
+            parameters.push_back(this->theta_b[i][j]);
+    parameters.push_back(this->logZ);
+}
+void MRFModel::load_from_vector(const std::vector<double>& parameters){
+    // assumption: the mrf size is equal to the parameter
+    int pnt = 0;
+    for (int i = 0; i < this->n;i++)
+        for (int j = 0; j < this->n; j++){
+            this->phi[i][j] = parameters[pnt];
+            pnt++;
+        }
+    for (int i = 0; i < this->n - 1;i++)
+        for(int j = 0; j < this->n; j++){
+            this->theta_a[i][j] = parameters[pnt];
+            pnt++;
+        }
+    for (int i = 0; i < this->n; i++)
+        for (int j = 0; j < this-> n - 1; j++){
+            this->theta_b[i][j] = parameters[pnt];
+            pnt++;
+        }
+    this->logZ = parameters[pnt];
 }
 #endif
