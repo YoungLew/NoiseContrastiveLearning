@@ -1,2 +1,2 @@
 all:
-	g++ -o generate_data ./generate_data.cxx 
+	g++ -o learn ./nce_learning.cxx
