@@ -2,12 +2,13 @@
 *     File Name           :     nce_learning.cxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-21 16:04]
-*     Last Modified       :     [2016-01-21 16:14]
+*     Last Modified       :     [2016-01-21 16:35]
 *     Description         :     nce learning process 
 **/
 
 #include "./mrfmodel.hxx"
 #include "./data.hxx"
+#include "./Optimizer.hxx"
 #include <fstream>
 using namespace std;
 

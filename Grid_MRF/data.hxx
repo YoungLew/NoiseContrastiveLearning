@@ -2,7 +2,7 @@
 *     File Name           :     data.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-03 10:18]
-*     Last Modified       :     [2016-01-20 17:26]
+*     Last Modified       :     [2016-01-22 17:53]
 *     Description         :     2d-array data 
 **/
 
@@ -34,6 +34,12 @@ struct Data{
     int size;
     double** elem;
     double& get(int i, int j){
+        return this->elem[i][j];
+    }
+    double& get_with_1d(int index){
+        int i, j;
+        i = index / this-> size;
+        j = index - (i * this->size);
         return this->elem[i][j];
     }
     double const_get(int i, int j) const{
