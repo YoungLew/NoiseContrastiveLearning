@@ -3,14 +3,14 @@
 #     File Name           :     plot_from_exp.py
 #     Created By          :     largelymfs
 #     Creation Date       :     [2016-01-25 16:29]
-#     Last Modified       :     [2016-01-25 22:54]
+#     Last Modified       :     [2016-01-26 07:44]
 #     Description         :     plot the negative-log-likelihood 
 #
 
 if __name__=='__main__':
     import matplotlib.pyplot as plt
     data = []
-    with open("./experiment_result_5x5") as fin:
+    with open("./experiment_result1") as fin:
         while True:
             line = fin.readline()
             if not line:
