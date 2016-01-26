@@ -2,7 +2,7 @@
 *     File Name           :     model.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 13:36]
-*     Last Modified       :     [2016-01-25 19:03]
+*     Last Modified       :     [2016-01-26 14:43]
 *     Description         :     storage grid MRF Model 
 **/
 
@@ -33,7 +33,9 @@ class MRFModel{
         void save_to_vector(std::vector<double>& parameters);
         void random_initialize();
         void noise_initialize(std::vector<Data> & data);
+        void save_to_file(const char* filename);
         double compare_error(MRFModel* std);
+        double calculate_exact_logZ();
     private:
         void initialize(int N);
         void finalize();
@@ -136,14 +138,19 @@ void MRFModel::sample_several_points_gibbs_bidirectional(std::vector<Data>& data
     for (int i = n - 2; i >= 0; i--) offset[i] = offset[i + 1]  * 2;
     for (int k = 0; k < num_samples; k++){
         int old_state = 0;
-        for (int i = 0; i < n; i++){
-            if (i == 0) old_state = sample_from_distribution(prob_forward[0][0], this->state_number);
-            else old_state = sample_from_distribution(prob_forward[i][old_state], this->state_number);
+        old_state = sample_from_distribution(prob_forward[0][0], this->state_number);
+        for (int cnt = 0; cnt < 10; cnt++){
+            for (int i = 1; i < n; i++){
+                old_state = sample_from_distribution(prob_forward[i][old_state], this->state_number);
+            }
+            for (int i = n - 2; i >= 0; i--){
+                old_state = sample_from_distribution(prob_backward[i][old_state], this->state_number);
+            }
         }
-        for (int j = 0; j < n; j++) datas[k].get(n-1, j) = (int)((old_state & offset[j]) != 0);
-        for (int i = n - 2; i >= 0; i--){
-            old_state = sample_from_distribution(prob_backward[i][old_state], this->state_number);
-            for (int j = 0; j < n; j++) datas[k].get(i, j) = (int)((old_state & offset[j]) != 0); 
+        for (int j = 0; j< n; j++) datas[k].get(0, j) = (int)((old_state & offset[j]) != 0);
+        for (int i = 1; i < n; i++){
+            old_state = sample_from_distribution(prob_forward[i][old_state], this->state_number);
+            for (int j = 0; j < n; j++) datas[k].get(i, j) = (int)((old_state & offset[j]) != 0);
         }
     }
     delete[] offset;
@@ -248,6 +255,27 @@ void MRFModel::load_from_file(const char* filename){
         for (int j = 0; j < cnt_variable - 1; j++)
             input >> this->theta_b[i][j];
     input.close();
+}
+void MRFModel::save_to_file(const char* filename){
+    ofstream output(filename);
+    output << this->n;
+    output << std::endl;
+    for (int i = 0; i < this->n; i++){
+        for (int j = 0; j < this->n; j++) output << this->phi[i][j] << " " ;
+        output << std::endl;
+    }
+    output << std::endl;
+    for (int i = 0; i < this-> n - 1; i++){
+        for (int j = 0; j < this-> n; j++) output << this->theta_a[i][j] << " ";
+        output << std::endl;
+    }
+    output << std::endl;
+    for (int i = 0; i < this->n; i++){
+        for (int j = 0; j < this-> n - 1; j++) output << this->theta_b[i][j] << " ";
+        output << std::endl;
+    }
+    output << std::endl;
+    output.close();
 }
 void MRFModel::print(){
     std::cout << "======================PHI=======================" << std::endl;
@@ -367,5 +395,7 @@ double MRFModel::compare_error(MRFModel* std){
         }
     std::cout << std::endl;
     return result;
+}
+double MRFModel::calculate_exact_logZ(){
 }
 #endif

@@ -2,7 +2,7 @@
 *     File Name           :     generate_data.cxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-20 16:56]
-*     Last Modified       :     [2016-01-25 18:46]
+*     Last Modified       :     [2016-01-26 12:46]
 *     Description         :     generate training data set and testing data set using cpp language 
 **/
 
@@ -46,7 +46,7 @@ int main(){
     output1 << testing_instance_number << std::endl;
     for (int i = 0; i < testing_instance_number; i++) {
         testing_data[i].print_to_file(output1);
-        output << std::endl;
+        output1 << std::endl;
     }
     output1.close();
     delete m;
