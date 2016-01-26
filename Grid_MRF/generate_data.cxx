@@ -2,7 +2,7 @@
 *     File Name           :     generate_data.cxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-20 16:56]
-*     Last Modified       :     [2016-01-21 16:02]
+*     Last Modified       :     [2016-01-25 18:46]
 *     Description         :     generate training data set and testing data set using cpp language 
 **/
 
@@ -21,7 +21,7 @@ int main(){
     char train_filename[MAX_STRING_LEN]="./train.data";
     char test_filename[MAX_STRING_LEN]="./test.data";
     int training_instance_number = 5000;
-    int testing_instance_number = 1000;
+    int testing_instance_number = 5000;
     char model_filename[MAX_STRING_LEN] ="./demo.model";
     int grid_size = 5;
     

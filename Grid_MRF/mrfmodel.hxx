@@ -2,7 +2,7 @@
 *     File Name           :     model.hxx
 *     Created By          :     largelymfs
 *     Creation Date       :     [2016-01-18 13:36]
-*     Last Modified       :     [2016-01-21 13:37]
+*     Last Modified       :     [2016-01-25 19:03]
 *     Description         :     storage grid MRF Model 
 **/
 
@@ -23,6 +23,7 @@ class MRFModel{
         MRFModel(int N = 5);
         ~MRFModel();
         LOGDOUBLE calculate_norm_log_prob(Data & d);
+        LOGDOUBLE evaluate_log_probability(std::vector<Data>& dataset);
         LOGDOUBLE calculate_unnorm_log_prob(Data &d);
         void load_from_file(const char* filename);
         void print();
@@ -30,6 +31,9 @@ class MRFModel{
         void sample_several_points_gibbs_bidirectional(std::vector<Data>& datas, int num_samples);
         void load_from_vector(const std::vector<double>& parameters);
         void save_to_vector(std::vector<double>& parameters);
+        void random_initialize();
+        void noise_initialize(std::vector<Data> & data);
+        double compare_error(MRFModel* std);
     private:
         void initialize(int N);
         void finalize();
@@ -84,6 +88,10 @@ LOGDOUBLE MRFModel::calculate_norm_log_prob(Data& d){
     return this->calculate_unnorm_log_prob(d) - this->logZ;
 }
 void MRFModel::sample_several_points_gibbs_directional(std::vector<Data> &datas, int num_samples){
+    if (num_samples != datas.size()){
+        datas.clear();
+        for (int i = 0; i < num_samples; i++) datas.push_back(Data(this->n));
+    }
     int n = this->n;
     int state_number = 1;
     for (int i = 0; i < n; i++) state_number *= 2;                  // total state number of one line
@@ -109,6 +117,10 @@ void MRFModel::sample_several_points_gibbs_directional(std::vector<Data> &datas,
     this->probability_finalize(prob_forward, prob_backward);
 }
 void MRFModel::sample_several_points_gibbs_bidirectional(std::vector<Data>& datas, int num_samples){
+    if (num_samples != datas.size()){
+        datas.clear();
+        for (int i = 0; i < num_samples; i++) datas.push_back(Data(this->n));
+    }
     int n = this-> n;
     int state_number = 1;
     for (int i = 0; i < n; i++) state_number *= 2;
@@ -185,7 +197,7 @@ void MRFModel::calculate_forward(double*** prob_forward){                       
             for (int sj = 0; sj < state_number; sj++) norm += prob_forward[i][si][sj];
             for (int sj = 0; sj < state_number; sj++) prob_forward[i][si][sj] /= ((double)(norm));
             for (int sj = 1; sj < state_number; sj++) prob_forward[i][si][sj] += prob_forward[i][si][sj - 1];
-            for (int sj = 0; sj < state_number; sj++) std::cout << prob_forward[i][si][sj] << " ";std::cout << std::endl;
+            //for (int sj = 0; sj < state_number; sj++) std::cout << prob_forward[i][si][sj] << " ";std::cout << std::endl;
        }
 
     delete[] offset;
@@ -212,8 +224,8 @@ void MRFModel::calculate_backward(double*** prob_backward){
             for (int sj = 0; sj < state_number; sj++) normal += prob_backward[i][si][sj];
             for (int sj = 0; sj < state_number; sj++) prob_backward[i][si][sj] /= ((double)(normal));
             for (int sj = 1; sj < state_number; sj++) prob_backward[i][si][sj] += prob_backward[i][si][sj - 1];
-            for (int sj = 0; sj < state_number; sj++) std::cout << prob_backward[i][si][sj] << " ";
-            std::cout << std::endl;
+            //for (int sj = 0; sj < state_number; sj++) std::cout << prob_backward[i][si][sj] << " ";
+            //std::cout << std::endl;
         }
     }
 
@@ -287,5 +299,73 @@ void MRFModel::load_from_vector(const std::vector<double>& parameters){
             pnt++;
         }
     this->logZ = parameters[pnt];
+}
+void MRFModel::random_initialize(){
+    random_init();
+    for (int i = 0; i < this->n; i++)
+        for (int j = 0; j < this->n; j++)
+            this->phi[i][j] = random_double() / (double)(this->n * this->n);
+    for (int i = 0; i < this->n - 1; i++)
+        for (int j = 0; j < this->n; j++){
+            this->theta_a[i][j] = random_double() / (double)(this->n * this->n);
+            this->theta_b[j][i] = random_double() / (double)(this->n * this->n);
+        }
+    this->logZ = random_double() / (double)(this->n * this->n); 
+}
+void MRFModel::noise_initialize(std::vector<Data> & data){
+    for (int i = 0; i < this->n - 1; i++)
+        for (int j = 0; j < this-> n; j++){
+            this->theta_a[i][j] = 0.0;
+            this->theta_b[j][i] = 0.0;
+        }
+    for (int i = 0; i < this->n; i ++)
+        for (int j = 0; j < this->n; j++){
+            int cnt = 0;
+            for (int k = 0; k < data.size(); k++)
+                if (data[k].get(i, j) == 1) cnt +=1;
+            double prob = 0.0;
+            prob = (double)(cnt) / (double)(data.size());
+            this->phi[i][j] = log(prob/(1.0 - prob));
+        }
+    this->logZ = 0.0;
+    for (int i = 0; i < this->n; i++)
+        for (int j = 0; j < this->n; j++){
+            LOGDOUBLE  tmp = log(exp(this->phi[i][j]) + 1.0);
+            this->logZ = this->logZ + tmp;
+        }
+}
+LOGDOUBLE MRFModel::evaluate_log_probability(std::vector<Data>& dataset)
+{
+    LOGDOUBLE  tmp = 0.0;
+    for (int i = 0; i < dataset.size(); i++)
+        tmp += this->calculate_norm_log_prob(dataset[i]);
+    return tmp;
+}
+double MRFModel::compare_error(MRFModel* std){
+    int n = this->n;
+    double tmp = 0.0;
+    double result = 0.0;
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++){
+            tmp = (this->phi[i][j] - std->phi[i][j]);
+            std::cout << tmp <<  " ";
+            result += (tmp * tmp);
+        }
+    std::cout << std::endl;
+    for (int i = 0; i < n - 1; i++)
+        for (int j = 0; j < n; j++){
+            tmp = (this->theta_a[i][j] - std->theta_a[i][j]);
+            std::cout << tmp << " ";
+            result += (tmp * tmp);
+        }
+    std::cout << std::endl;
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n -1; j++){
+            tmp = (this->theta_b[i][j] - std->theta_b[i][j]);
+            std::cout << tmp << " ";
+            result += (tmp * tmp);
+        }
+    std::cout << std::endl;
+    return result;
 }
 #endif
